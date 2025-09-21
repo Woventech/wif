@@ -1,103 +1,114 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+type InvestmentType = {
+  name: string;
+  rate: number; // rendimento annuo %
+};
+
+const investments: InvestmentType[] = [
+  { name: "ETF", rate: 0.07 },
+  { name: "Azioni", rate: 0.1 },
+  { name: "Obbligazioni", rate: 0.03 },
+  { name: "Bilanciato", rate: 0.05 },
+];
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [monthly, setMonthly] = useState(200);
+  const [years, setYears] = useState(10);
+  const [investment, setInvestment] = useState(investments[0]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  // Calcolo valori
+  const months = years * 12;
+  let totalInvested = monthly * months;
+  let balance = 0;
+  const data: any[] = [];
+
+  for (let m = 1; m <= months; m++) {
+    balance = balance * (1 + investment.rate / 12) + monthly;
+    if (m % 12 === 0) {
+      data.push({
+        year: m / 12,
+        value: balance,
+      });
+    }
+  }
+
+  const netBalance = balance * (1 - 0.26); // netto dopo tasse
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-4">Investimenti intelligenti</h1>
+      <p className="mb-6">
+        La finanza personale è fondamentale per costruire il proprio futuro.
+        Qui puoi simulare come cresce un investimento nel tempo.
+      </p>
+
+      <div className="mb-6 flex flex-col gap-4">
+        <label>
+          Importo mensile (€):
+          <input
+            type="number"
+            value={monthly}
+            onChange={(e) => setMonthly(Number(e.target.value))}
+            className="ml-2 border px-2"
+          />
+        </label>
+        <label>
+          Periodo (anni):
+          <input
+            type="number"
+            value={years}
+            onChange={(e) => setYears(Number(e.target.value))}
+            className="ml-2 border px-2"
+          />
+        </label>
+        <label>
+          Tipo di investimento:
+          <select
+            value={investment.name}
+            onChange={(e) =>
+              setInvestment(
+                investments.find((i) => i.name === e.target.value) || investments[0]
+              )
+            }
+            className="ml-2 border px-2"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {investments.map((inv) => (
+              <option key={inv.name}>{inv.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="bg-white p-4 rounded shadow-md">
+        <h2 className="text-xl font-semibold mb-2">Simulazione crescita</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={data}>
+            <CartesianGrid stroke="#ccc" />
+            <XAxis dataKey="year" label={{ value: "Anni", position: "insideBottom", offset: -5 }} />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+
+        <div className="mt-4">
+          <p>Totale versato: € {totalInvested.toFixed(2)}</p>
+          <p>Totale finale: € {balance.toFixed(2)}</p>
+          <p>Totale netto (dopo tasse 26%): € {netBalance.toFixed(2)}</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
